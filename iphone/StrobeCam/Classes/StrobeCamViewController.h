@@ -22,7 +22,6 @@
 @property(nonatomic, retain) AVCaptureDevice *device;
 @property(nonatomic, retain) AVCaptureDeviceInput *flashInput;
 @property(nonatomic, retain) NSTimer *flashTimer;
-@property(nonatomic, retain) AVCaptureStillImageOutput *output;
 
 
 @end

@@ -49,7 +49,7 @@
 - (void)didReceiveMemoryWarning {
 	// Releases the view if it doesn't have a superview.
     [super didReceiveMemoryWarning];
-	
+
 	// Release any cached data, images, etc that aren't in use.
 }
 
@@ -60,11 +60,33 @@
 
 
 - (void)dealloc {
+  [self.imageController release];
+  [self.timer release];
   [super dealloc];
 }
 
 - (IBAction)strobeButtonDown {
   NSLog(@"button down");
+  self.imageController = [[[UIImagePickerController alloc] init] autorelease];
+  self.imageController.delegate = self;
+  self.imageController.sourceType = UIImagePickerControllerSourceTypeCamera;
+  self.imageController.showsCameraControls = NO;
+  self.imageController.cameraFlashMode = UIImagePickerControllerCameraFlashModeOn;
+  [self presentModalViewController:self.imageController animated:NO];
+  self.timer = [NSTimer scheduledTimerWithTimeInterval:5.0
+                                                target:self
+                                              selector:@selector(takePicture)
+                                              userInfo:nil
+                                               repeats:NO];
+}
+
+- (void)takePicture {
+  [self.imageController takePicture];
+}
+
+- (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary *)info {
+  NSLog(@"didFinishPickingMediaWithInfo");
+  [self.imageController takePicture];
 }
 
 @end

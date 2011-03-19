@@ -12,6 +12,8 @@
 
 }
 
+@property(nonatomic, retain) UIImagePickerController *imageController;
+@property(nonatomic, retain) NSTimer *timer;
 - (IBAction)strobeButtonDown;
 
 @end

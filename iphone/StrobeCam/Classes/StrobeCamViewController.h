@@ -11,6 +11,7 @@
 @class AVCaptureSession;
 @class AVCaptureDevice;
 @class AVCaptureDeviceInput;
+@class AVCaptureStillImageOutput;
 
 @interface StrobeCamViewController : UIViewController <UIImagePickerControllerDelegate, UINavigationControllerDelegate> {
 

@@ -13,7 +13,6 @@
 @interface StrobeCamViewController ()
 
 - (void)setupTorch;
-- (void)turnFlashOn;
 - (void)fireFlash;
 
 @end
@@ -25,6 +24,7 @@
   [device release];
   [flashInput release];
   [flashTimer release];
+  [output release];
   [super dealloc];
 }
 
@@ -44,7 +44,7 @@
     if (self.device.torchMode == AVCaptureTorchModeOff) {
       NSLog(@"It's currently off.. turning on now.");
       self.flashInput = [[AVCaptureDeviceInput deviceInputWithDevice:self.device error: nil] autorelease];
-      AVCaptureVideoDataOutput *output = [[[AVCaptureVideoDataOutput alloc] init] autorelease];
+      self.output = [[[AVCaptureStillImageOutput alloc] init] autorelease];
       
       AVCaptureSession *session = [[AVCaptureSession alloc] init];
       
@@ -53,6 +53,8 @@
       
       [session addInput:flashInput];
       [session addOutput:output];
+      
+      self.device.flashMode = AVCaptureFlashModeOn;
       
       [self.device unlockForConfiguration];
       
@@ -69,26 +71,21 @@
 }
 
 - (void)fireFlash {
-  [self turnFlashOn];
-  self.flashTimer = [NSTimer scheduledTimerWithTimeInterval:0.1
-                                                     target:self
-                                                   selector:@selector(turnFlashOff)
-                                                   userInfo:nil
-                                                    repeats:NO];
-}
-
-- (void)turnFlashOn {
-  [self.device lockForConfiguration:nil];
-//  self.device.flashMode = AVCaptureFlashModeOn;
-  self.device.torchMode = AVCaptureTorchModeOn;
-  [self.device unlockForConfiguration];
-}
-
-- (void)turnFlashOff {
-  [self.device lockForConfiguration:nil];
-//  self.device.flashMode = AVCaptureFlashModeOff;
-  self.device.torchMode = AVCaptureTorchModeOff;
-  [self.device unlockForConfiguration];
+  AVCaptureConnection *videoConnection = nil;
+  for (AVCaptureConnection *connection in self.output.connections) {
+    for (AVCaptureInputPort *port in [connection inputPorts]) {
+      if ([[port mediaType] isEqual:AVMediaTypeVideo] ) {
+        videoConnection = connection;
+        break;
+      }
+    }
+    if (videoConnection) { break; }
+  }
+  [self.output captureStillImageAsynchronouslyFromConnection:videoConnection
+                                           completionHandler:
+   ^(CMSampleBufferRef imageSampleBuffer, NSError *error) {
+     NSLog(@"image callback fired");
+   }];
 }
 
 @end

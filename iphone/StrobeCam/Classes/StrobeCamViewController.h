@@ -12,6 +12,7 @@
 @class AVCaptureDevice;
 @class AVCaptureDeviceInput;
 @class AVCaptureStillImageOutput;
+@class AVCaptureConnection;
 
 @interface StrobeCamViewController : UIViewController <UIImagePickerControllerDelegate, UINavigationControllerDelegate> {
 
@@ -24,6 +25,10 @@
 @property(nonatomic, retain) AVCaptureDeviceInput *flashInput;
 @property(nonatomic, retain) NSTimer *flashTimer;
 @property(nonatomic, retain) AVCaptureStillImageOutput *output;
+@property(nonatomic, retain) AVCaptureConnection *videoConnection;
+@property(nonatomic, retain) IBOutlet UIImageView *imageView;
+@property(nonatomic, retain) NSTimer *flashOffTimer;
+@property(nonatomic, retain) NSTimer *flashOnTimer;
 
 
 @end

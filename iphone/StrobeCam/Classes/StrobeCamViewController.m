@@ -13,7 +13,9 @@
 @interface StrobeCamViewController ()
 
 - (void)setupTorch;
-- (void)fireFlash;
+- (void)captureImage;
+- (void)turnTorchOn;
+- (void)turnTorchOff;
 
 @end
 
@@ -25,12 +27,16 @@
   [flashInput release];
   [flashTimer release];
   [output release];
+  [videoConnection release];
+  self.imageView = nil;
+  [flashOnTimer release];
+  [flashOffTimer release];
   [super dealloc];
 }
 
 - (IBAction)strobeButtonDown {
   NSLog(@"button down");
-  [self fireFlash];
+  [self captureImage];
 }
 
 - (void)viewDidLoad {
@@ -54,7 +60,7 @@
       [session addInput:flashInput];
       [session addOutput:output];
       
-      self.device.flashMode = AVCaptureFlashModeOn;
+      session.sessionPreset = AVCaptureSessionPresetLow;
       
       [self.device unlockForConfiguration];
       
@@ -62,6 +68,17 @@
       [session startRunning];
       
       self.torchSession = session;
+      
+      self.videoConnection = nil;
+      for (AVCaptureConnection *connection in self.output.connections) {
+        for (AVCaptureInputPort *port in [connection inputPorts]) {
+          if ([[port mediaType] isEqual:AVMediaTypeVideo] ) {
+            self.videoConnection = connection;
+            break;
+          }
+        }
+        if (self.videoConnection) { break; }
+      }
     }
     else {
       NSLog(@"It's currently on.. turning off now.");
@@ -70,21 +87,45 @@
   }
 }
 
-- (void)fireFlash {
-  AVCaptureConnection *videoConnection = nil;
-  for (AVCaptureConnection *connection in self.output.connections) {
-    for (AVCaptureInputPort *port in [connection inputPorts]) {
-      if ([[port mediaType] isEqual:AVMediaTypeVideo] ) {
-        videoConnection = connection;
-        break;
-      }
-    }
-    if (videoConnection) { break; }
-  }
+- (void)turnTorchOn {
+  [self.device lockForConfiguration:nil];
+  self.device.torchMode = AVCaptureTorchModeOn;
+  [self.device unlockForConfiguration];
+}
+
+- (void)turnTorchOff {
+  [self.device lockForConfiguration:nil];
+  self.device.torchMode = AVCaptureTorchModeOff;
+  [self.device unlockForConfiguration];
+}
+
+- (void)fireFlashFor {
+  [self turnTorchOn];
+  self.flashOffTimer = [NSTimer scheduledTimerWithTimeInterval:0.03
+                                                        target:self
+                                                      selector:@selector(turnTorchOff)
+                                                      userInfo:nil
+                                                       repeats:NO];
+}
+
+- (void)fireFlashIn:(NSTimeInterval)interval {
+  self.flashOnTimer = [NSTimer scheduledTimerWithTimeInterval:interval
+                                                       target:self
+                                                     selector:@selector(fireFlashFor)
+                                                     userInfo:nil
+                                                      repeats:NO];
+}
+
+- (void)captureImage {
+  [self fireFlashIn:0.1];
   [self.output captureStillImageAsynchronouslyFromConnection:videoConnection
                                            completionHandler:
    ^(CMSampleBufferRef imageSampleBuffer, NSError *error) {
      NSLog(@"image callback fired");
+     NSData *data = [AVCaptureStillImageOutput jpegStillImageNSDataRepresentation:imageSampleBuffer];
+     UIImage *image = [UIImage imageWithData:data];
+     self.imageView.image = image;
+//     [self captureImage];
    }];
 }
 
